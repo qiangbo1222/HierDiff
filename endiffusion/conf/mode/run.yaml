@@ -1,0 +1,5 @@
+# @package _global_
+mode: run
+
+defaults:
+  - override /logging: default

@@ -1,0 +1,10 @@
+checkpoint:
+  _target_: pytorch_lightning.callbacks.ModelCheckpoint
+  dirpath: log/checkpoints
+  filename: '{epoch}-{step}'
+  # auto_insert_metric_name: false
+  save_last: true
+  monitor: 'train_loss'
+  save_top_k: 1
+  verbose: true
+  mode: 'min'

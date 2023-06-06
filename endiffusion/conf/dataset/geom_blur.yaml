@@ -1,0 +1,15 @@
+_target_: dataset.geom_data.GEOM_data
+name: "geom_drug"
+args:
+  data_name: crossdock_cond
+  feature_size: 8
+  #feature_size: 4
+  vocab_path: endiffusion/dataset/vocab.txt
+  #vocab_fp_path: /home/songyuxuan/Projects/EnDiffusion/endiffusion/dataset/atom_embed.csv
+  vocab_fp_path: dataset/vocab_blur_fps_updated.csv
+  data_dir: data/GEOM_drugs_trees_blur_correct_adj
+
+  dataloader_config:
+    batch_size: 16
+    num_workers: 16
+    pin_memory: True

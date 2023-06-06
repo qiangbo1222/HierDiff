@@ -1,0 +1,14 @@
+vocab_size: 781
+in_node_nf: 8
+context_nf : 0
+hidden_nf: 256
+out_node_nf: 780
+n_layers_full: 3
+n_layers_focal: 3
+
+array_dict: dataset/atom_embed_dict.pkl
+full_softmax: True
+
+focal_loss: 5
+edge_loss: 1
+node_loss: 2

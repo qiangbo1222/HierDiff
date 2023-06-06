@@ -1,0 +1,22 @@
+defaults:
+  - model: ddpmgblur
+  - optim: adamw
+  - scheduler: step
+  - dataset: geom_blur #
+  # - pipeline: generator
+  - callbacks: [checkpoint, lr_monitor]
+  - logging: wandb
+  - mode: debug  # (debug / run, enable logging) python train.py +mode=run +logging=csv
+  - trainer: default
+  - override hydra/job_logging: colorlog
+  - override hydra/hydra_logging: colorlog
+
+run_test: False
+seed: 2022
+
+hydra:
+  run:
+    dir: train_log/ENdiff/${mode}/${dataset.name}/${model._target_}/${now:%Y-%m-%d_%H-%M-%S}_pfeat
+  sweep:
+    dir: train_log/ENdiff/${mode}/${dataset.name}/${model._target_}/${now:%Y-%m-%d_%H-%M-%S}_pfeat
+    subdir: ${hydra.job.num}

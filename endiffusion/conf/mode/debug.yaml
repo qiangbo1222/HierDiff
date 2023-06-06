@@ -1,0 +1,5 @@
+# @package _global_
+mode: debug
+
+defaults:
+  - override /logging: null

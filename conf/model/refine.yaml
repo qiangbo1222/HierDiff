@@ -1,0 +1,6 @@
+vocab_size: 780
+feature_size: 8
+hidden_size: 256
+n_layers: 2
+
+size_dict: dataset/size_dict.pkl

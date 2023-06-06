@@ -1,0 +1,14 @@
+*.pyc
+*.png
+*.txt
+*.npy
+*.gif
+*.npz
+*.pickle
+*.log
+*.out
+*.bz2
+*.wandb
+endiffusion/wandb/latest-run
+
+

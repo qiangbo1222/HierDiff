@@ -1,0 +1,7 @@
+vocab_path: 2d_jtvae/icml18-jtnn-master/data/zinc/vocab.txt
+vocab_fp_path: dataset/atom_embed.csv
+vocab_size: 780
+
+model_path: ckpt/edge_denoise_pf.ckpt
+model_refine_path: ckpt/refine_pf.ckpt
+beam_size: 5

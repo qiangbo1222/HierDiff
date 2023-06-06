@@ -1,0 +1,36 @@
+_target_: train_module.diffusion_qm9.DiffusionQM9
+cfg:
+  pocket: False
+  loss_type: 'vlb'
+  hcontinous: true
+  noise_schedule: 'learned'
+  timesteps: 1000 
+  norm_values: [1., 1., 1.]
+  norm_biases: [null,0.,0.]
+  parametrization: 'eps'
+  include_charges: True
+  dataset: "qm9"
+  conditioning: [] #homo | lumo | alpha | gap | mu | Cv
+  data_augmentation: False 
+  pre_noise:
+    noise_schedule: 'learned'
+    timesteps: 1000
+    precision: 1e-4
+  dynamics:
+    node_coarse_type: prop
+    context_node_nf: 0
+    n_dims: 3
+    #the above part will be move into the python files.
+    hidden_nf: 256
+    act_fn: "silu"
+    n_layers: 6
+    attention: true
+    condition_time: true
+    tanh: true
+    mode: "egnn_dynamics"
+    norm_constant: 0
+    inv_sublayers: 2
+    sin_embedding: False
+    normalization_factor: 10
+    aggregation_method: "sum"
+  analyze: /home/qiangb/code/icml23/EnDiffusion/endiffusion/conf/analyze/crossdock.yaml
