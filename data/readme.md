@@ -7,7 +7,7 @@ We mainly used GEOM drug and crossdock to train and test our model. We provide t
 
 
 #### Processed dataset
-We provide the preprocessed datasets (GEOM) in this [[google drive folder]](https://drive.google.com/file/d/17OQ6PKLZ-J3a5sHdbCqt5PabJ-C9Bg9G/view?usp=sharing)  After downleading the dataset, you should change the specific path in the config files `conf/dataset/denoise.yaml`, `conf/dataset/refine.yaml` and `endiffusion/conf/dataset`.
+We provide the preprocessed datasets (GEOM) in this [[google drive folder]](https://drive.google.com/file/d/17OQ6PKLZ-J3a5sHdbCqt5PabJ-C9Bg9G/view?usp=sharing)  After downloading the dataset, you should change the specific path in the config files `conf/dataset/denoise.yaml`, `conf/dataset/refine.yaml` and `endiffusion/conf/dataset`.
 
 ### Prepare your own GEOM dataset from official dataset (optional)
 
