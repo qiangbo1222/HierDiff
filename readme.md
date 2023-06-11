@@ -5,7 +5,9 @@
 
 The official implementation of 'Coarse-to-Fine: a Hierarchical Diffusion Model for Molecule Generation in 3D' (ICML 2023 Poster)
 
-[[Code](https://github.com/qiangbo1222/HierDiff)]
+[Code](https://github.com/qiangbo1222/HierDiff)
+
+[Paper Arxiv](https://arxiv.org/abs/2305.13266)
 
 ![cover](assets/overview.png)
 
