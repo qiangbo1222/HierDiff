@@ -23,7 +23,7 @@ conda activate hierdiff
 ```
 
 ## Dataset
-The instruction for preprocessing the dataset are provided in `dataset/readme.md`.
+The instruction for preprocessing the dataset are provided in `data/readme.md`.
 
 
 ## Training
