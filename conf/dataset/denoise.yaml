@@ -1,20 +1,22 @@
 vocab_path: dataset/vocab.txt
-vocab_fp_path: dataset/vocab_blur_fps_updated.csv
+node_coarse_type: prop
+
+vocab_fp_path_prop: dataset/vocab_blur_fps_updated.csv
+vocab_fp_path_elem: dataset/atom_embed.csv
 
 dataloader:
-  batch_size: 128
-  num_workers: 20
+  batch_size: 2
+  num_workers: 2
   shuffle: True
   pin_memory: True
 
 dataset:
-  data_dir: data/crossdock_data/trees
-  split: data/crossdock_data/denoise_split.pkl
-  int_feature_size: 5
-  num_continutes_feature: 3
+  node_coarse_type: prop
+  data_dir: data/GEOM_drugs_trees_blur_correct_adj
+  split: data/geom_denoise_split.pkl
+  feature_size: 0
   context_nf: 0
   vocab_size: 781
   search_mode: dfs_bidirection
-  search_priority: False
   full_softmax: True
-  #array_dict: dataset/atom_embed_dict.pkl
+  array_dict: dataset/atom_embed_dict.pkl

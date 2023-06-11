@@ -53,14 +53,15 @@ Then changed the ckpt variables in `conf/generation/edge_denoise.yaml` to the pr
 # Sample fine-grained fragment 3D graph
 INPUT_PATH='YOUR PICKLED COARSED-GRAINED SAMPLES'
 OUTPUT_PATH='PATH TO SAVE FINE-GRAINED FRGAMENTS GRAPH'
-python generation/ar_sampling.py --input_path $INPUT_PATH --output_path $OUTPUT_PATH
+python generation/ar_sampling_nosize.py --input_path $INPUT_PATH --output_path $OUTPUT_PATH
 ```
 
 At last, you need to reconstruct the molecules from the fragment graphs:
 
 ```bash
 # Sample fine-grained fragment 3D graph
-python generation/reconstruct --tree_path $OUTPUT_PATH
+RESULT_PATH='PATH TO SAVE FINAL RESULTS'
+python generation/reconstruct.py --tree_path $OUTPUT_PATH --output_dir $RESULT_PATH
 ```
 
 The output files is a pickled file containing the coordinates of the fragment centers and Rdkit Mol object. If you need atom-resolution coordinates, you can pass the results to the *set_rmsd* function from `eval/MFF_RMSD.py` to derive refined conformations.

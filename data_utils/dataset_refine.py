@@ -31,6 +31,8 @@ class mol_Tree_pos(data.Dataset):
             self.vocab = vocab
         else:
             raise ValueError('dataname not supported')
+        
+        self.node_coarse_type = args.node_coarse_type
     
     def __len__(self):
         if self.dataname == 'crossdock':
@@ -49,34 +51,38 @@ class mol_Tree_pos(data.Dataset):
             random.shuffle(tree)
             tree = tree[0]
         random_choose = random.randint(0, len(tree.nodes)-1)
-        node = tree.nodes[random_choose]
+        node_chose = tree.nodes[random_choose]
         feature_tensor = []
         vocab_tensor = []
         size_tensor = []
         pos_tensor = []
-        for i, n in enumerate(tree.nodes):
-            #fp = np.array(self.vocab.fp_df.loc[node.smiles])
-            fp_fix = np.array(self.vocab.fp_df.loc[node.smiles])
-            contribute_TPSA = rdMolDescriptors._CalcTPSAContribs(tree.mol3D)
-            contribute_ASA = rdMolDescriptors._CalcLabuteASAContribs(tree.mol3D)
-            tpsa = sum([contribute_TPSA[i] for i in node.clique])/10
-            asa = (sum([list(contribute_ASA[0])[i] for i in node.clique]) + contribute_ASA[1])/10
-            fp = np.concatenate((np.array([node.hbd]), fp_fix, np.array([tpsa]), np.array([asa])))
-            pos_tensor.append(torch.tensor(n.pos))
-            size_tensor.append(torch.tensor(Chem.MolFromSmiles(n.smiles).GetNumHeavyAtoms()))
+        for i, node in enumerate(tree.nodes):
+            pos_tensor.append(torch.tensor(node.pos))
+            if self.node_coarse_type == 'prop':
+                fp_fix = np.array(self.vocab.fp_df.loc[node.smiles])
+                contribute_TPSA = rdMolDescriptors._CalcTPSAContribs(tree.mol3D)
+                contribute_ASA = rdMolDescriptors._CalcLabuteASAContribs(tree.mol3D)
+                tpsa = sum([contribute_TPSA[i] for i in node.clique])/10
+                asa = (sum([list(contribute_ASA[0])[i] for i in node.clique]) + contribute_ASA[1])/10
+                node.fp = np.concatenate((np.array([node.hbd]), fp_fix, np.array([tpsa]), np.array([asa])))
+            elif self.node_coarse_type == 'elem':
+                fp_fix = np.array(self.vocab.fp_df.loc[node.smiles])
+                node.fp = fp_fix
+
+            size_tensor.append(torch.tensor(Chem.MolFromSmiles(node.smiles).GetNumHeavyAtoms()))
             if i == random_choose:
-                vocab_tensor.append(torch.tensor(780))#move to conf
-                feature_tensor.append(torch.zeros(fp.shape))
+                vocab_tensor.append(torch.tensor(780))
+                feature_tensor.append(torch.zeros(node.fp.shape))
             else:
-                vocab_tensor.append(torch.tensor(n.wid))
-                feature_tensor.append(torch.tensor(fp))
+                vocab_tensor.append(torch.tensor(node.wid))
+                feature_tensor.append(torch.tensor(node.fp))
         feature_tensor = torch.stack(feature_tensor)
         vocab_tensor = torch.stack(vocab_tensor)
         size_tensor = torch.stack(size_tensor)
         pos_tensor = torch.stack(pos_tensor)
         edges = torch.tensor(tree.adj_matrix).nonzero().T.tolist()
         edges = get_bfs_depth_edges(edges, random_choose, feature_tensor.shape[0], sample=True)
-        return feature_tensor, vocab_tensor, torch.tensor(node.wid), size_tensor, pos_tensor, edges, tree.adj_matrix, random_choose
+        return feature_tensor, vocab_tensor, torch.tensor(node_chose.wid), size_tensor, pos_tensor, edges, tree.adj_matrix, random_choose
             
         
 def PadCollate(batch, args):

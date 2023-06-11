@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 from data_utils.mol_tree import *
 
-sys.path.append('/home/songyuxuan/Projects/3Dmolgen/generation/jtnn')
+sys.path.append('generation/jtnn')
 from generation.jtnn.jtnn_dec import can_assemble
 
 from models.egnn.gcl import E_GCL

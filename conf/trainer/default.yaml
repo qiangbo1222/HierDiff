@@ -1,5 +1,5 @@
 accelerator: gpu
-devices: [0, 1, 2]
+devices: [0,1]
 strategy: ddp
 weights_summary: top
 max_epochs: 200

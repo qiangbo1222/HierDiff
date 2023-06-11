@@ -12,12 +12,13 @@ defaults:
   - override hydra/job_logging: colorlog
   - override hydra/hydra_logging: colorlog
 
-sample_dir: data/geom_small/sample/${mode}/${dataset.name}/${model._target_}/${now:%Y-%m-%d_%H-%M-%S}/sample_hx_ef.pkl
-checkpoint: train_log/ENdiff/debug/geom_drug/train_module.diffusion_qm9.DiffusionQM9/2023-03-15_00-05-06_pfeat/log/checkpoints/epoch=36-step=40626.ckpt
+
+#replace this with your trained weights
+checkpoint: /home/qiangb/ckpt/diffusion.ckpt
 
 hydra:
   run:
-    dir: data/geom_small/sample/${mode}/${dataset.name}/${model._target_}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: data/geom_sample/${mode}/${dataset.name}/${model._target_}/${now:%Y-%m-%d_%H-%M-%S}
   sweep:
-    dir: data/geom_small/sample/${mode}/${dataset.name}/${model._target_}/${now:%Y-%m-%d_%H-%M-%S}
+    dir: data/geom_sample/${mode}/${dataset.name}/${model._target_}/${now:%Y-%m-%d_%H-%M-%S}
     subdir: ${hydra.job.num}

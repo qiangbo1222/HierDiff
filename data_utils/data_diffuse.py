@@ -14,27 +14,9 @@ import torch
 import torch.nn as nn
 import tqdm
 
-sys.path.append("/home/qiangbo/molgen/3D_jtvae")
+sys.path.append(".")
 
 from data_utils.mol_tree import *
-
-'''
-parser = argparse.ArgumentParser()
-parser.add_argument('--data_path',
-                    type=str,
-                    default='/sharefs/sharefs-qb/3D_jtvae/GEOM_drugs_trees_blur/')
-parser.add_argument('--output_path',
-                    type=str,
-                    default='/sharefs/sharefs-qb/3D_jtvae/GEOM_drugs_trees_diffuse_withdecode/')
-parser.add_argument('--vocab_path',
-                    type=str,
-                    default='/home/qiangbo/molgen/3D_jtvae/2d_jtvae/icml18-jtnn-master/data/zinc/vocab.txt')
-parser.add_argument('--vocab_fp_path',
-                    type=str,
-                    default='/home/qiangbo/molgen/3D_jtvae/dataset/vocab_blur_fps.csv')          
-args = parser.parse_args()
-
-'''
 
 class bfs_node(object):
     def __init__(self, idx, links):
@@ -169,23 +151,3 @@ def tree_to_train_graph(tree, vocab, return_type='get_all'):
                 
         jt.bfs_edges = np.array(bfs_edges)
         return jt
-'''
-with open(args.vocab_path, "r") as f:
-        vocab = [x.strip() for x in f.readlines()]
-vocab_fp = pd.read_csv(args.vocab_fp_path, index_col=0)
-vocab = Vocab(vocab, vocab_fp)
-
-if __name__ == '__main__':
-    input_paths = os.listdir(args.data_path)
-    def read_process_write(file_path):
-        with open(os.path.join(args.data_path, file_path), 'rb') as f:
-            trees = pickle.load(f)
-            train_graph = tree_to_train_graph(trees[0], vocab)
-            for i, graph in enumerate(train_graph):
-                with open(os.path.join(args.output_path, file_path[:-4] + str(i) + '.pkl'), 'wb') as f:
-                    pickle.dump(graph, f)
-    pool = Pool(32)
-    for _ in tqdm.tqdm(pool.imap_unordered(read_process_write, input_paths), total=len(input_paths)):
-        continue
-    #read_process_write(input_paths[0])
-'''

@@ -16,7 +16,7 @@ import torch
 import tqdm
 from biopandas.pdb import PandasPdb
 
-sys.path.append('..')
+sys.path.append('.')
 from data_utils.chemutils import (decode_stereo, enum_assemble, get_clique_mol,
                                   get_mol, get_smiles, set_atommap,
                                   tree_decomp)

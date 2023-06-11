@@ -6,8 +6,8 @@ import sys
 
 import tqdm
 
-sys.path.append('../generation/jtnn')
-sys.path.append('..')
+sys.path.append('./generation/jtnn')
+sys.path.append('.')
 
 import rdkit
 import rdkit.Chem as Chem
@@ -25,7 +25,7 @@ lg.setLevel(rdkit.RDLogger.CRITICAL)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--start_num', type=int, default=0)
-parser.add_argument('--tree_path', type=str)
+parser.add_argument('--tree_path', type=str, default='/home/qiangb/code/hierdiff_private/test/sampled_trees_from_prop_embed_0-1000__5.pkl')
 parser.add_argument('--vocab_path', type=str, default='dataset/vocab.txt')
 parser.add_argument('--output_dir', type=str, default='output_results.pkl')
 parser.add_argument(
@@ -52,16 +52,10 @@ stereo = True if int(args.stereo) == 1 else False
 
 
 model = JTNNVAE(vocab, hidden_size, latent_size, depth, stereo=stereo)
-#model.load_state_dict(torch.load(args.model_path, map_location='cpu'))
-#device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-#model = model.to(device)
-#model.eval()
 
-with open(args.tree_path, 'rb') as f:#+f'{args.start_num}-{args.start_num + 500}__5.pkl'
+with open(args.tree_path, 'rb') as f:
     data = pickle.load(f)
 
-#with open(args.tree_path+'debug.pkl', 'rb') as f:
-#    data = pickle.load(f)
 
 
 def check_qm9_atom(smi):
@@ -79,17 +73,18 @@ all_smi_counter = 0
 with torch.no_grad():
     for i, tree in enumerate(tqdm.tqdm(data, desc='Reconstructing molecules from trees')):
         #tree.tree.context = tree.context
-        pocket_name = tree.name
+        try:
+            pocket_name = tree.name
+        except:
+            pocket_name = 'unknown'
         tree = tree.tree
         if len(tree.nodes) < 100:
-            #tree = pickle.load(open('/home/AI4Science/qiangb/data_from_brain++/sharefs/3D_jtvae/GEOM_drugs_trees_blur_correct_adj/100000_drug_trees.pkl', 'rb'))[0]
             for idx, node in enumerate(tree.nodes):
                 node.is_leaf = (len(node.neighbors) == 1)
                 node.idx = idx
                 for nei in node.neighbors:
                     node.is_leaf = (len(node.neighbors) == 1)
                     node.idx = idx
-            #print(model.sample_tree(tree))
             output = model.sample_tree(tree, vocab, args)
             
             if output != 'max9':
@@ -102,12 +97,11 @@ with torch.no_grad():
                     results.append((output_mol, amap[1:], pocket_name, smi))
                     smiles.append(can_smiles)
                     print(Chem.MolToSmiles(smi))
-                #else:
-                #    print('fail for invalid')
+
 print(f'{len(results)} molecules reconstructed.')
 print(f'valid: {len(results) / all_smi_counter}')
 print(f'unique: {len(set(smiles)) / len(smiles)}')
 print(f'average atom num: {sum([len(mol.GetAtoms()) for mol, _, _, _ in results]) / len(results)}')
-with open(args.output_dir+f'{args.start_num}-{args.start_num + 500}__5.pkl', 'wb') as f:
+with open(args.output_dir+f'{args.start_num}__5.pkl', 'wb') as f:
     pickle.dump(results, f)
 

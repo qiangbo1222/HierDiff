@@ -7,7 +7,7 @@ We mainly used GEOM drug and crossdock to train and test our model. We provide t
 
 
 #### Processed dataset
-We provide the preprocessed datasets (GEOM) in this [[google drive folder]](https://drive.google.com/file/d/1hHQ4UJsYEC_0gkagrp1J3LqMa1gotrrs/view?usp=share_link)  After downleading the dataset, you should change the specific path in the config files `conf/dataset/denoise.yaml`, `conf/dataset/refine.yaml` and `endiffusion/conf/dataset`.
+We provide the preprocessed datasets (GEOM) in this [[google drive folder]](https://drive.google.com/file/d/17OQ6PKLZ-J3a5sHdbCqt5PabJ-C9Bg9G/view?usp=sharing)  After downleading the dataset, you should change the specific path in the config files `conf/dataset/denoise.yaml`, `conf/dataset/refine.yaml` and `endiffusion/conf/dataset`.
 
 ### Prepare your own GEOM dataset from official dataset (optional)
 
@@ -18,7 +18,7 @@ python data_utils/mol_tree.py 'GEOM_drug'
 ```
 
 ### CrossDock
-We extract all the bind conformation from Crossdock dataset that are close to the cocrystal structure (RMSD < 1). The sdf file for these conformation can be downloaded from [[google drive folder]](https://drive.google.com/file/d/14vrWKmzXGZ321dgkyzYffbPrlyxkqttH/view?usp=drive_link). Move it to `data` and run the following to preprocessed the data to fragment graphs:
+We extract all the bind conformation from Crossdock dataset that are close to the cocrystal structure (RMSD < 1). The sdf file for these conformation can be downloaded from [[google drive folder]](https://drive.google.com/file/d/14vrWKmzXGZ321dgkyzYffbPrlyxkqttH/view?usp=sharing). Move it to `data` and run the following to preprocessed the data to fragment graphs:
 
 ```bash
 python data_utils/mol_tree.py 'crossdock'

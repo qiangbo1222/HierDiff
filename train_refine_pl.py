@@ -23,7 +23,6 @@ from torch.utils import data
 from torch.utils.data import DataLoader, random_split
 
 import data_utils.dataset_refine as dataset
-import train_utils
 from trainmodule.Refine import Refine
 
 parser = argparse.ArgumentParser()
@@ -47,43 +46,26 @@ cfg = edict({
     'trainer':
     yaml.load(open(join(args.config_path, 'trainer/default.yaml')),
               Loader=Loader),
-    'analyze':
-    join(args.config_path, 'analyze/crossdock.yaml'),
 })
 #read in the config for model and training
 
 
-class crossdock_data_module(LightningDataModule):
-    def __init__(self, cfg):
-        with open(cfg.dataset.dataset.split_dir, 'rb') as f:
-            split = pickle.load(f)
-
-    def train_dataloader(self):
-        crossdock_data_train = dataset.mol_Tree_pos(cfg.dataset.dataset,
-                                                    dataname='crossdock',
-                                                    split=split['train'])
-        print('train data size:', len(crossdock_data_train))
-        dataloader_train = data.DataLoader(
-            crossdock_data_train,
-            **cfg.dataset,
-            collate_fn=lambda batch: dataset.PadCollate(batch, args))
-        return dataloader_train
-
-    def val_dataloader(self):
-        crossdock_data_valid = dataset.mol_Tree_pos(cfg.dataset.dataset,
-                                                    dataname='crossdock',
-                                                    split=split['valid'])
-        dataloader_valid = data.DataLoader(
-            crossdock_data_valid,
-            **cfg.dataset,
-            collate_fn=lambda batch: dataset.PadCollate(batch, args))
-        return dataloader_valid
 
 class GEOM_data_module(LightningDataModule):
     def __init__(self):
         super().__init__()
         with open(cfg.dataset.vocab_path, "r") as f:
             vocab = [x.strip() for x in f.readlines()]
+
+        if cfg.dataset.node_coarse_type == 'prop':
+            cfg.dataset.vocab_fp_path = cfg.dataset.vocab_fp_path_prop
+            cfg.dataset.dataset.int_feature_size = 5
+            cfg.dataset.dataset.num_continutes_feature = 3
+        elif cfg.dataset.node_coarse_type == 'elem':
+            cfg.dataset.vocab_fp_path = cfg.dataset.vocab_fp_path_elem
+            cfg.dataset.dataset.int_feature_size = 3
+            cfg.dataset.dataset.num_continutes_feature = 0
+
         vocab = Vocab(vocab, fp_df=pd.read_csv(cfg.dataset.vocab_fp_path, index_col=0))
         whole_dataset = dataset.mol_Tree_pos(cfg.dataset.dataset, dataname='GEOM_drug', vocab=vocab)
         torch.manual_seed(2022)

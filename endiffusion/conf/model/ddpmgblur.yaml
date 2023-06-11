@@ -1,6 +1,8 @@
 _target_: train_module.diffusion_qm9.DiffusionQM9
 cfg:
   pocket: False
+  node_coarse_type: prop
+  #choose between prop | elem
   loss_type: 'vlb'
   hcontinous: true
   noise_schedule: 'learned'
@@ -17,7 +19,7 @@ cfg:
     timesteps: 1000
     precision: 1e-4
   dynamics:
-    node_coarse_type: prop
+    in_node_nf: 0
     context_node_nf: 0
     n_dims: 3
     #the above part will be move into the python files.
@@ -33,4 +35,4 @@ cfg:
     sin_embedding: False
     normalization_factor: 10
     aggregation_method: "sum"
-  analyze: /home/qiangb/code/icml23/EnDiffusion/endiffusion/conf/analyze/crossdock.yaml
+  analyze: conf/analyze/GEOM.yaml

@@ -294,8 +294,8 @@ class JTNNVAE(nn.Module):
                 neighbors[i] = unchange_node
         '''
         if len(cands) == 0:
-            #return cur_mol, global_amap
-            return None
+            return cur_mol, global_amap
+            #return None
         cand_smiles,cand_mols,cand_amap = zip(*cands)
 
         cands = [(candmol, all_nodes, cur_node) for candmol in cand_mols]

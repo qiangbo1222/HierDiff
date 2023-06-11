@@ -1,0 +1,101 @@
+cfg: !!python/object/new:easydict.EasyDict
+  dictitems:
+    dataset: &id004 !!python/object/new:easydict.EasyDict
+      dictitems:
+        dataloader: &id001 !!python/object/new:easydict.EasyDict
+          dictitems:
+            batch_size: 4
+            num_workers: 4
+            pin_memory: true
+          state:
+            batch_size: 4
+            num_workers: 4
+            pin_memory: true
+        dataset: &id002 !!python/object/new:easydict.EasyDict
+          dictitems:
+            data_dir: data/GEOM_drugs_trees_blur_correct_adj
+            node_coarse_type: prop
+          state:
+            data_dir: data/GEOM_drugs_trees_blur_correct_adj
+            node_coarse_type: prop
+        int_feature_size: 5
+        node_coarse_type: prop
+        num_continutes_feature: 3
+        vocab_fp_path_elem: dataset/atom_embed.csv
+        vocab_fp_path_prop: dataset/vocab_blur_fps_updated.csv
+        vocab_path: dataset/vocab.txt
+      state:
+        dataloader: *id001
+        dataset: *id002
+        int_feature_size: 5
+        node_coarse_type: prop
+        num_continutes_feature: 3
+        vocab_fp_path_elem: dataset/atom_embed.csv
+        vocab_fp_path_prop: dataset/vocab_blur_fps_updated.csv
+        vocab_path: dataset/vocab.txt
+    model: &id005 !!python/object/new:easydict.EasyDict
+      dictitems:
+        feature_size: 8
+        hidden_size: 256
+        n_layers: 2
+        size_dict: dataset/size_dict.pkl
+        vocab_size: 780
+      state:
+        feature_size: 8
+        hidden_size: 256
+        n_layers: 2
+        size_dict: dataset/size_dict.pkl
+        vocab_size: 780
+    optim: &id006 !!python/object/new:easydict.EasyDict
+      dictitems:
+        _target_: torch.optim.AdamW
+        amsgrad: true
+        lr: 0.0004
+        weight_decay: 1.0e-08
+      state:
+        _target_: torch.optim.AdamW
+        amsgrad: true
+        lr: 0.0004
+        weight_decay: 1.0e-08
+    scheduler: &id007 !!python/object/new:easydict.EasyDict
+      dictitems:
+        _target_: torch.optim.lr_scheduler.StepLR
+        gamma: 0.1
+        step_size: 3
+      state:
+        _target_: torch.optim.lr_scheduler.StepLR
+        gamma: 0.1
+        step_size: 3
+    trainer: &id008 !!python/object/new:easydict.EasyDict
+      dictitems:
+        accelerator: gpu
+        default_root_dir: pl_log/refine
+        devices: &id003
+        - 0
+        - 1
+        gradient_clip_algorithm: norm
+        gradient_clip_val: 1
+        log_every_n_steps: 10
+        max_epochs: 200
+        num_sanity_val_steps: 0
+        strategy: ddp
+        track_grad_norm: 2
+        weights_summary: top
+      state:
+        accelerator: gpu
+        default_root_dir: pl_log/refine
+        devices: *id003
+        gradient_clip_algorithm: norm
+        gradient_clip_val: 1
+        log_every_n_steps: 10
+        max_epochs: 200
+        num_sanity_val_steps: 0
+        strategy: ddp
+        track_grad_norm: 2
+        weights_summary: top
+  state:
+    dataset: *id004
+    model: *id005
+    optim: *id006
+    scheduler: *id007
+    trainer: *id008

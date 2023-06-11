@@ -1,0 +1,14 @@
+**.swp
+**.swo
+**.pkl
+**.npy
+**.pdb
+**.pdbqt
+
+**.nfs*
+
+__pycache__
+runs
+ckpts
+wandb
+.ipynb_checkpoints

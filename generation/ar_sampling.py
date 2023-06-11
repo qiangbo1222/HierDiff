@@ -9,14 +9,11 @@ import sys
 import warnings
 from queue import PriorityQueue
 
-import shutup
-
-shutup.please()
 
 import tqdm
 from pathos.multiprocessing import ProcessingPool as Pool
 
-sys.path.append("..")
+sys.path.append(".")
 sys.path.append("../generation/jtnn")
 
 import data_utils.dataset_denoise as dataset
@@ -162,13 +159,6 @@ def update_trees(model, model_refine,trees, vocab, beam_size=5, device=torch.dev
         new_trees = [[copy.deepcopy(trees[i]) for _ in range(beam_size)] for i in range(len(trees))]
         logp_batch = []
         for i, t in enumerate(trees):
-            #for new_t in new_trees[i]:
-            #    new_t.tree.adj_matrix = adj_matrix[i]
-            '''
-            array_inds = vocab.get_array(node_array_predict[i])
-            if len(array_inds) == 0:
-                array_inds = handle_wrong_array(node_array_predict[i], vocab)
-            '''
             array_inds = node_array_predict[i]
             predict = nn.LogSoftmax(dim=-1)(node_predict[i, array_inds].detach()).cpu()
             if len(array_inds) < beam_size:
@@ -207,9 +197,6 @@ def update_trees(model, model_refine,trees, vocab, beam_size=5, device=torch.dev
                     new_trees[i][j].tree.nodes[edges_result[i][0]] = n
                     #print(f'{j}_update: {new_trees[i][j].index_}: {[n.wid for n in new_trees[i][j].tree.nodes if isinstance(n, MolTreeNode)]}')
             
-            #for tree in new_trees[i]:
-            #    print(f'{tree.index_}: {[n.wid for n in tree.tree.nodes if isinstance(n, MolTreeNode)]}')
-            #print('end checked round')
             #update edges
             for t_ind in range(len(new_trees[i])):
                 if t_ind >= len(cand_nodes):
@@ -324,8 +311,6 @@ def sample_trees_from_blur(jts, model, model_refine, vocab, cfg, device, context
                 else:
                     tree_batch.append(tree)
                     new_trees, logp_batch = update_trees(model, model_refine, tree_batch, vocab, cfg.generation.beam_size, device)
-                    #for tree in new_trees:
-                    #    print(f'{tree.index_}: {[n.wid for n in tree.tree.nodes if isinstance(n, MolTreeNode)]}')
                     for i, new_t in enumerate(new_trees):
                         new_t.check_end()
                         new_t.logp += (logp_batch[i] + random.uniform(0, 1e-8))
@@ -335,8 +320,6 @@ def sample_trees_from_blur(jts, model, model_refine, vocab, cfg, device, context
             else:
                 tree_batch.append(tree)
                 new_trees, logp_batch = update_trees(model, model_refine, tree_batch, vocab, cfg.generation.beam_size, device)
-                #for tree in new_trees:
-                #    print(f'{tree.index_}: {[n.wid for n in tree.tree.nodes if isinstance(n, MolTreeNode)]}')
                 for i, new_t in enumerate(new_trees):
                     new_t.check_end()
                     new_t.logp += (logp_batch[i] + random.uniform(0, 1e-8))
@@ -366,7 +349,13 @@ if __name__ == '__main__':
 
     with open(cfg.generation.vocab_path, "r") as f:
         vocab = [x.strip() for x in f.readlines()]
-    vocab_fp = pd.read_csv(cfg.generation.vocab_fp_path, index_col=0)
+
+    if cfg.generation.node_coarse_type == 'prop':
+        vocab_fp_path = cfg.generation.vocab_fp_path_prop
+    elif cfg.generation.node_coarse_type == 'elem':
+        vocab_fp_path = cfg.generation.vocab_fp_path_elem
+
+    vocab_fp = pd.read_csv(vocab_fp_path, index_col=0)
     vocab = Vocab(vocab, vocab_fp)
     random.seed(2022)
 
@@ -395,16 +384,12 @@ if __name__ == '__main__':
         #except:
         #    print('DDPM generate impossible atom dict')
         #    continue
+        #need the above code to skip impossible fragments when using hard constraint
         if len(r) > 0:
             for t in r:
-                #t = model_refine.check_final_tree(t, vocab, device, check_num=30)
-                #if t is None:
-                #    continue
-                #if sum([can_assemble(n) for n in t.tree.nodes]) == len(t.tree.nodes):
                 if 'context' in data[i].keys():
                     t.context = data[i]['context'][0].item()
                 trees_output.append(t)
-                print('success')
                 break
     print(f'{len(trees_output)} trees sampled')
     with open(os.path.join(args.output_path, f'sampled_trees_from_atom_embed_{args.start_num}-{args.start_num+1000}__{cfg.generation.beam_size}.pkl'), 'wb') as f:

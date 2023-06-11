@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 from data_utils.data_diffuse import (get_bfs_order, get_bfs_order_new,
                                      get_dfs_order)
-from data_utils.MPNN_pattern import priority_rank
 
 from models.egnn.egnn_new import EGNN
 from models.egnn.gcl import E_GCL
@@ -155,7 +154,7 @@ class Edge_denoise(nn.Module):
             edges = torch.tensor(edge_search_orig[depth]).to(h.device).T
             edge_attr = torch.sum((x[edges[0]] - x[edges[1]]) ** 2, dim=1, keepdim=True)
             h, x = self._modules['gcl_edge'](h, edges, x, edge_attr=edge_attr, node_mask=node_mask)
-        if max_depth > 0:
+        if max_depth > 0 and len(real_focal) > 0:
                 #h, x = self.egnn_edge(h, x, edges, edge_attr=edge_attr, node_mask=node_mask)
             h_focal = h[real_focal, :].unsqueeze(1).repeat(1, n_nodes, 1)
             x_focal = x[real_focal, :].unsqueeze(1).repeat(1, n_nodes, 1)
@@ -450,7 +449,7 @@ class Edge_denoise(nn.Module):
             bfs_result = get_bfs_order_new(edges, num_nodes, end)
             return bfs_result
     
-    def adj_matrix_to_edges_dfs(self, adj_matrix, blur_feature, end, priority=False):
+    def adj_matrix_to_edges_dfs(self, adj_matrix, blur_feature, end):
         #adj_matrix need to remove the padding first
         blur_feature = blur_feature.cpu()
         if adj_matrix.sum() == 0:
@@ -465,11 +464,6 @@ class Edge_denoise(nn.Module):
                     graph[edge[0]].append(edge[1])
                 if edge[0] not in graph[edge[1]]:
                     graph[edge[1]].append(edge[0])
-            if priority:
-                for i in range(num_nodes):
-                    rank_ind = priority_rank(blur_feature[graph[i]], val[graph[i]])
-                    rank_ind.reverse()
-                    graph[i] = [graph[i][r] for r in rank_ind]
             dfs_result = get_dfs_order(graph, end)
             dfs_order, dfs_paths = dfs_result['order'], dfs_result['path']
             dfs_depth = max([d[1] for d in dfs_order])

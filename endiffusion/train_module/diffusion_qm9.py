@@ -1,8 +1,10 @@
 import logging
+import os
 # from dataset.qm9.utils import prepare_context
 import math
 from distutils.debug import DEBUG
 from typing import Dict
+
 
 import numpy as np
 import pytorch_lightning as pl
@@ -32,18 +34,14 @@ logger = logging.getLogger(__name__)
 RESIDUE_LIST = ["ALA", "ARG", "ASN", "ASP", "CYS", "GLN", "GLU", "GLY", "HIS", "ILE", "LEU", "LYS", "MET", "PHE", "PRO", "SER", "THR", "TRP", "TYR", "VAL"]
 
 class DiffusionQM9(pl.LightningModule):
-    # TODO change the args and the params here to the hydra args and the hydra params
-    # def __init__(self, dynamics: models.module.EGNN_dynamics_QM9, in_node_nf: int, n_dims: int,
-    #         timesteps: int = 1000, parametrization='eps', noise_schedule='learned',
-    #         noise_precision=1e-4, loss_type='vlb', norm_values=(1., 1., 1.),
-    #         norm_biases=(None, 0., 0.), include_charges=True):
     def __init__(self,cfg:Dict[str,any]):        
         super().__init__()
+        self.cwd = '../../../../../../'
         self.cfg = cfg
         self.save_hyperparameters() # type: dict
         self.pocket = cfg.pocket
         
-        self.node_coarse_type = cfg.dynamics["node_coarse_type"]
+        self.node_coarse_type = cfg["node_coarse_type"]
         if self.node_coarse_type == "prop":
             self.in_node_nf = 8
             cfg.dynamics["in_node_nf"] = self.in_node_nf
@@ -89,7 +87,7 @@ class DiffusionQM9(pl.LightningModule):
 
 
         if cfg.dynamics.condition_time:
-            self.in_node_nf += 1
+            cfg.dynamics["in_node_nf"] += 1
         else:
             print('Warning: dynamics model is _not_ conditioned on time.')
             self.in_node_nf =  self.in_node_nf
@@ -113,7 +111,7 @@ class DiffusionQM9(pl.LightningModule):
         self.data_augmentation = cfg.data_augmentation 
         
 
-        histogram = yaml.load(open(cfg.analyze), Loader=Loader)
+        histogram = yaml.load(open(os.path.join(self.cwd, cfg.analyze)), Loader=Loader)
         self.nodes_dist = DistributionNodes(histogram=histogram)
 
         # print("here")
@@ -380,7 +378,10 @@ class DiffusionQM9(pl.LightningModule):
             s_array = s_array / self.T
             t_array = t_array / self.T
 
-            z = self.sample_p_zs_given_zt(s_array, t_array, torch.cat([z, torch.cat([pocket_pos, pocket_feat], dim=-1)], dim=1), node_mask_concat, edge_mask_concat, context, mol_shape=mol_shape)
+            if pocket_cond is not None:
+                z = self.sample_p_zs_given_zt(s_array, t_array, torch.cat([z, torch.cat([pocket_pos, pocket_feat], dim=-1)], dim=1), node_mask_concat, edge_mask_concat, context, mol_shape=mol_shape)
+            else:
+                z = self.sample_p_zs_given_zt(s_array, t_array, z, node_mask, edge_mask, context, mol_shape=mol_shape)
         
         z = z[:, :mol_shape]
         x, h = self.sample_p_xh_given_z0(z, node_mask, edge_mask, context)

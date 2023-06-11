@@ -40,8 +40,6 @@ class EdgeDenoise(LightningModule):
         self.log('training_edge_loss', result['edge_loss'], on_step=True, prog_bar=True, sync_dist=True)
         self.log('training_edge_accuracy', result['edge_accuracy'], on_step=True, prog_bar=True, sync_dist=True)
         self.log('training_node_loss', result['node_loss'], on_step=True, prog_bar=True, sync_dist=True)
-        #self.log('perturb_loss', result['perturb_loss'], on_step=True, prog_bar=True, sync_dist=True)
-        #self.log('training_node_size_loss', result['node_size_loss'], on_step=True, prog_bar=True, sync_dist=True)
         self.log('training_node_accuracy', result['node_accuracy'], on_step=True, prog_bar=True, sync_dist=True)
         return loss
         
@@ -127,16 +125,6 @@ class EdgeDenoise(LightningModule):
         return max_estimated_steps
     
     def _compute_metrics(self, result):
-        #print(result.keys())
-        # try:
-        #     out_loss = result['CE_loss'].mean()
-        #     print('CE_loss')
-        # except:
-        #     out_loss = result['loss'].mean()
-        #     print("orig_loss")
-        # mean_loss = result["loss"].mean()
-        # ppl = torch.exp(out_loss)
-        # print(ppl, mean_loss, out_loss)
         return {"loss":result["total_loss"].mean(),
                 'focal_loss':result['focal_loss'].mean(),
                 'edge_loss':result['edge_loss'].mean(),
@@ -157,8 +145,6 @@ class EdgeDenoise(LightningModule):
         self.log('valid_focal_loss', metrics['focal_loss'], on_epoch=True, prog_bar=True, sync_dist=True)
         self.log('valid_edge_loss', metrics['edge_loss'], on_epoch=True, prog_bar=True, sync_dist=True)
         self.log('valid_node_loss', metrics['node_loss'], on_epoch=True, prog_bar=True, sync_dist=True)
-        #self.log('valid_perturb_loss', metrics['perturb_loss'], on_epoch=True, prog_bar=True, sync_dist=True)
-        #self.log('valid_node_size_loss', metrics['node_size_loss'], on_epoch=True, prog_bar=True, sync_dist=True)
         self.log('valid_focal_accuracy', metrics['focal_accuracy'], on_epoch=True, prog_bar=True, sync_dist=True)
         self.log('valid_edge_accuracy', metrics['edge_accuracy'], on_epoch=True, prog_bar=True, sync_dist=True)
         self.log('valid_node_accuracy', metrics['node_accuracy'], on_epoch=True, prog_bar=True, sync_dist=True)

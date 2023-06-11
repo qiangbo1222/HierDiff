@@ -1,0 +1,103 @@
+model:
+  _target_: train_module.diffusion_qm9.DiffusionQM9
+  cfg:
+    pocket: false
+    node_coarse_type: prop
+    loss_type: vlb
+    hcontinous: true
+    noise_schedule: learned
+    timesteps: 1000
+    norm_values:
+    - 1.0
+    - 1.0
+    - 1.0
+    norm_biases:
+    - null
+    - 0.0
+    - 0.0
+    parametrization: eps
+    include_charges: true
+    dataset: qm9
+    conditioning: []
+    data_augmentation: false
+    pre_noise:
+      noise_schedule: learned
+      timesteps: 1000
+      precision: 0.0001
+    dynamics:
+      in_node_nf: 0
+      context_node_nf: 0
+      n_dims: 3
+      hidden_nf: 256
+      act_fn: silu
+      n_layers: 6
+      attention: true
+      condition_time: true
+      tanh: true
+      mode: egnn_dynamics
+      norm_constant: 0
+      inv_sublayers: 2
+      sin_embedding: false
+      normalization_factor: 10
+      aggregation_method: sum
+    analyze: conf/analyze/GEOM.yaml
+optim:
+  _target_: torch.optim.AdamW
+  lr: 0.0004
+  weight_decay: 4.0e-08
+scheduler:
+  _target_: torch.optim.lr_scheduler.StepLR
+  step_size: 15
+  gamma: 0.1
+dataset:
+  _target_: dataset.geom_data.GEOM_data
+  name: geom_drug
+  args:
+    data_name: GEOM_drug
+    node_coarse_type: prop
+    vocab_path: dataset/vocab.txt
+    vocab_fp_path_elem: dataset/atom_embed.csv
+    vocab_fp_path_prop: dataset/vocab_blur_fps_updated.csv
+    data_dir: data/GEOM_drugs_trees_blur_correct_adj
+    dataloader_config:
+      batch_size: 16
+      num_workers: 16
+      pin_memory: true
+sample:
+  batch_size: 2
+  num_batches: 16
+callbacks:
+  checkpoint:
+    _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    dirpath: log/checkpoints
+    filename: '{epoch}-{step}'
+    save_last: true
+    monitor: train_loss
+    save_top_k: 1
+    verbose: true
+    mode: min
+  lr_monitor:
+    _target_: pytorch_lightning.callbacks.LearningRateMonitor
+mode: debug
+trainer:
+  accelerator: cuda
+  strategy: ddp
+  gpus:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  amp_backend: apex
+  amp_level: O2
+  profiler: simple
+  max_epochs: 80
+  gradient_clip_val: 2
+  gradient_clip_algorithm: norm
+  log_every_n_steps: 1
+  track_grad_norm: 2
+  num_sanity_val_steps: 2
+  default_root_dir: ./
+  accumulate_grad_batches: 1
+sample_dir: data/geom/sample/${mode}/${dataset.name}/${model._target_}/${now:%Y-%m-%d_%H-%M-%S}/sample_hx_ef.pkl
+checkpoint: /home/qiangb/ckpt/diffusion.ckpt

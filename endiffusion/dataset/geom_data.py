@@ -1,3 +1,4 @@
+import os
 from typing import Any, Dict
 
 import torch
@@ -15,9 +16,20 @@ class GEOM_data(LightningDataModule):
         args: Dict[str,Any]
         ):
         super().__init__()
+        if args.node_coarse_type == 'prop':
+            vocab_fp_path = args.vocab_fp_path_prop
+            args.feature_size = 8
+        elif args.node_coarse_type == 'elem':
+            vocab_fp_path = args.vocab_fp_path_elem
+            args.feature_size = 3
+        self.cwd = '../../../../../../../'
+        print("current dir:", os.getcwd())
+        args.vocab_path = os.path.join(self.cwd, args.vocab_path)
+        vocab_fp_path = os.path.join(self.cwd, vocab_fp_path)
+
         with open(args.vocab_path, "r") as f:
             vocab = [x.strip() for x in f.readlines()]
-        vocab = Vocab(vocab, fp_df=pd.read_csv(args.vocab_fp_path, index_col=0))
+        vocab = Vocab(vocab, fp_df=pd.read_csv(vocab_fp_path, index_col=0))
         whole_dataset = mol_Tree_pos(args = args, dataname=args.data_name, vocab=vocab, split="train")
         torch.manual_seed(2022)
         train_size, valid_size = int(len(whole_dataset) * 0.9), int(len(whole_dataset) * 0.1)

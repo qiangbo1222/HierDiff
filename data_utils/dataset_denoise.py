@@ -24,11 +24,7 @@ from torch.utils.data import DataLoader
 
 from data_utils.mol_tree import MolTree, Vocab
 # from data_utils.data_diffuse import tree_to_train_graph
-from data_utils.MPNN_pattern import (bfs_multi_layer_direction,
-                                     bfs_single_layer_direction,
-                                     bfs_single_step_direction,
-                                     dfs_bidirection, dfs_direction,
-                                     tree_to_search_tree)
+from data_utils.MPNN_pattern import dfs_bidirection, tree_to_search_tree
 
 
 # only consider the position of the tree node (without angle and torision)
@@ -61,19 +57,9 @@ class mol_Tree_pos(data.Dataset):
             raise ValueError("dataname not supported")
 
         search_mode = args.search_mode
-        self.search_priority = args.search_priority
-        if search_mode == "bfs_multi_layer_direction":
-            self.search_mode = bfs_multi_layer_direction
-        elif search_mode == "bfs_single_layer_direction":
-            self.search_mode = bfs_single_layer_direction
-        elif search_mode == "bfs_single_step_direction":
-            self.search_mode = bfs_single_step_direction
-        elif search_mode == "dfs_direction":
-            self.search_mode = dfs_direction
-        elif search_mode == "dfs_bidirection":
-            self.search_mode = dfs_bidirection
-        else:
-            raise ValueError("search_mode not supported")
+        self.search_mode = dfs_bidirection
+
+        self.node_coarse_type = args.node_coarse_type
         
         #self.perturb_dist = torch.distributions.normal.Normal(0, x_perturb)
     
@@ -104,32 +90,28 @@ class mol_Tree_pos(data.Dataset):
                         ]
                     )
                 else:
-                    fp_fix = np.array(self.vocab.fp_df.loc[node.smiles])
-                    contribute_TPSA = rdMolDescriptors._CalcTPSAContribs(tree.mol3D)
-                    contribute_ASA = rdMolDescriptors._CalcLabuteASAContribs(tree.mol3D)
-                    tpsa = sum([contribute_TPSA[i] for i in node.clique])/10
-                    asa = (sum([list(contribute_ASA[0])[i] for i in node.clique]) + contribute_ASA[1])/10
-                    node.fp = np.concatenate((np.array([node.hbd]), fp_fix, np.array([tpsa]), np.array([asa])))
-                    #node.fp = fp_fix
+                    if self.node_coarse_type == 'prop':
+                        fp_fix = np.array(self.vocab.fp_df.loc[node.smiles])
+                        contribute_TPSA = rdMolDescriptors._CalcTPSAContribs(tree.mol3D)
+                        contribute_ASA = rdMolDescriptors._CalcLabuteASAContribs(tree.mol3D)
+                        tpsa = sum([contribute_TPSA[i] for i in node.clique])/10
+                        asa = (sum([list(contribute_ASA[0])[i] for i in node.clique]) + contribute_ASA[1])/10
+                        node.fp = np.concatenate((np.array([node.hbd]), fp_fix, np.array([tpsa]), np.array([asa])))
+                    elif self.node_coarse_type == 'elem':
+                        fp_fix = np.array(self.vocab.fp_df.loc[node.smiles])
+                        node.fp = fp_fix
             tree = tree_to_search_tree(
                 tree,
                 self.search_mode,
                 self.vocab,
-                self.args.int_feature_size,
-                priority=False,
+                self.args.int_feature_size
             )
         feature_tensor = []
         pos_tensor = []
         array_tensor = []
-        #perturb_tensor = []
-        #size_tensor = []
         for node_id, node in enumerate(tree.nodes):
             feature_tensor.append(torch.tensor(node.fp))
             pos_tensor.append(torch.tensor(node.pos))
-            #if node_id not in tree.undiscovered:
-            #    perturb_tensor.append(torch.zeros_like(torch.tensor(node.pos)))
-            #else:
-            #    perturb_tensor.append(self.perturb_dist.sample(node.pos.shape))
             if not self.args.full_softmax:
                 if self.args.context_nf:
                     array_tensor.append(
@@ -139,12 +121,8 @@ class mol_Tree_pos(data.Dataset):
                     array_tensor.append(
                         torch.tensor(check_array_in_list(node.fp[:-1], self.array_dict[0]))
                     )
-            #size_tensor.append(torch.tensor(Chem.MolFromSmiles(node.smiles).GetNumHeavyAtoms(), dtype=torch.long))
         feature_tensor = torch.stack(feature_tensor)
         pos_tensor = torch.stack(pos_tensor)
-        #perturb_tensor = torch.stack(perturb_tensor)
-        #pos_tensor = pos_tensor + perturb_tensor
-        #size_tensor = torch.stack(size_tensor)
         if not self.args.full_softmax:
             array_tensor = torch.stack(array_tensor)
         label_smiles = tree.nodes[tree.search_ind].smiles
@@ -170,8 +148,7 @@ class mol_Tree_pos(data.Dataset):
             "predict_idx": tree.search_ind,
             "last_ind": tree.last_ind,
 
-        }#"perturb": perturb_tensor[tree.search_ind]
-        #'search_edges': tree.search_edges,#'size': size_tensor
+        }
 
 
 def PadCollate_onehot(batch, args):
@@ -250,9 +227,6 @@ def PadCollate_onehot(batch, args):
         if sample['array'] != []:
             array_tensor[i, : sample["array"].shape[0]] = sample["array"]
         pos_tensor[i, : sample["position"].shape[0], :] = sample["position"]
-        # pos_mask[i, :sample['position'].shape[0], :] = 1
-        # edge_pad[i*max_len: i*max_len + sample['feat'].shape[0], i*max_len: i*max_len + sample['feat'].shape[0]] = torch.tensor(sample['adj_matrix'])
-        # edge_search.append(flat_add(sample['search_edges'], i * max_len))
         search_adj_matrix_org[
             i, : sample["adj_matrix"].shape[0], : sample["adj_matrix"].shape[1]
         ] = torch.tensor(sample["search_adj_matrix_org"])
@@ -274,29 +248,6 @@ def PadCollate_onehot(batch, args):
         focal.extend([ind + i * max_len for ind in sample["focal"]])
         undiscovered.append(sample["undiscovered"])
 
-    # max_search_depth = max([len(layers[0]) for layers in edge_search])
-    """
-    edge_search_pad = [[] for _ in range(max_search_depth)]
-    edge_search_pad_orig = [[] for _ in range(max_search_depth - 1)]
-    edge_search_flat = []
-    real_focal = []
-    for e in edge_search:
-        for i, l in enumerate(e[0]):
-            edge_search_pad[i].append(l)
-
-        if len(e[0]) > 0:
-            real_focal.append(e[0][-1][0])
-            for i, l in enumerate(e[0][: -1]):
-                edge_search_flat.append(l)
-                edge_search_pad_orig[i].append(l)
-    
-    edge_depth = len(edge_search_flat)
-    for i in range(edge_depth):
-        e = edge_search_flat[i]
-        if (e[1], e[0]) not in edge_search_flat:
-            edge_search_flat.append((e[1], e[0]))
-    edge_search_flat = list(set(edge_search_flat))
-    """
     node_nums_batch = feat_mask[:, :, 0].sum(1)
     if search_adj_matrix_org.sum() > 0:
         edge_search_flat = []

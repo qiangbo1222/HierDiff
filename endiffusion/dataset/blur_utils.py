@@ -30,23 +30,26 @@ class mol_Tree_pos(data.Dataset):
 
         self.dataname = dataname
         self.mode = mode
+        self.cwd = '../../../../../../../'
+        args.data_dir = os.path.join(self.cwd, args.data_dir)
         self.args = args
+        
         print(args)
         if dataname == 'crossdock':
             self.split = split
-            self.datapath_list = os.listdir(args.data_dir)
+            self.datapath_list = os.listdir(self.args.data_dir)
             
         elif dataname == 'GEOM_drug':
-            self.datapath_list = os.listdir(args.data_dir)
+            self.datapath_list = os.listdir(self.args.data_dir)
 
         elif dataname == 'crossdock_cond':
-            self.datapath_list = os.listdir(args.data_dir)
+            self.datapath_list = os.listdir(self.args.data_dir)
             self.datapath_list = [p for p in self.datapath_list if p.startswith(split)]
 
         else:
             raise ValueError('dataname not supported')
         self.vocab = vocab
-        self.coarse_type = args.coarse_type
+        self.node_coarse_type = args.node_coarse_type
     
     def __len__(self):
         if self.dataname == 'crossdock':
@@ -74,14 +77,14 @@ class mol_Tree_pos(data.Dataset):
             random.shuffle(tree)
             tree = tree[0]
         for node in tree.nodes:
-            if self.coarse_type == 'prop':
+            if self.node_coarse_type == 'prop':
                 fp_fix = np.array(self.vocab.fp_df.loc[node.smiles])
                 contribute_TPSA = rdMolDescriptors._CalcTPSAContribs(tree.mol3D)
                 contribute_ASA = rdMolDescriptors._CalcLabuteASAContribs(tree.mol3D)
                 tpsa = sum([contribute_TPSA[i] for i in node.clique])/10
                 asa = (sum([list(contribute_ASA[0])[i] for i in node.clique]) + contribute_ASA[1])/10
                 node.fp = np.concatenate((np.array([node.hbd]), fp_fix, np.array([tpsa]), np.array([asa])))
-            elif self.coarse_type == 'elem':
+            elif self.node_coarse_type == 'elem':
                 node.fp = fp_fix
         feature_tensor = []
         pos_tensor = []

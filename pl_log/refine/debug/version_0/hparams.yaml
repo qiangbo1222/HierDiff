@@ -1,0 +1,128 @@
+cfg: !!python/object/new:easydict.EasyDict
+  dictitems:
+    dataset: &id004 !!python/object/new:easydict.EasyDict
+      dictitems:
+        dataloader: &id001 !!python/object/new:easydict.EasyDict
+          dictitems:
+            batch_size: 128
+            num_workers: 20
+            pin_memory: true
+            shuffle: true
+          state:
+            batch_size: 128
+            num_workers: 20
+            pin_memory: true
+            shuffle: true
+        dataset: &id002 !!python/object/new:easydict.EasyDict
+          dictitems:
+            array_dict: dataset/atom_embed_dict.pkl
+            context_nf: 0
+            data_dir: data/GEOM_drugs_trees_blur_correct_adj
+            feature_size: 0
+            full_softmax: true
+            node_coarse_type: prop
+            search_mode: dfs_bidirection
+            split: data/geom_denoise_split.pkl
+            vocab_size: 781
+          state:
+            array_dict: dataset/atom_embed_dict.pkl
+            context_nf: 0
+            data_dir: data/GEOM_drugs_trees_blur_correct_adj
+            feature_size: 0
+            full_softmax: true
+            node_coarse_type: prop
+            search_mode: dfs_bidirection
+            split: data/geom_denoise_split.pkl
+            vocab_size: 781
+        node_coarse_type: prop
+        vocab_fp_path_elem: dataset/atom_embed.csv
+        vocab_fp_path_prop: dataset/vocab_blur_fps_updated.csv
+        vocab_path: dataset/vocab.txt
+      state:
+        dataloader: *id001
+        dataset: *id002
+        node_coarse_type: prop
+        vocab_fp_path_elem: dataset/atom_embed.csv
+        vocab_fp_path_prop: dataset/vocab_blur_fps_updated.csv
+        vocab_path: dataset/vocab.txt
+    model: &id005 !!python/object/new:easydict.EasyDict
+      dictitems:
+        array_dict: dataset/atom_embed_dict.pkl
+        context_nf: 0
+        edge_loss: 1
+        focal_loss: 5
+        full_softmax: true
+        hidden_nf: 256
+        in_node_nf: 8
+        n_layers_focal: 3
+        n_layers_full: 3
+        node_loss: 2
+        out_node_nf: 780
+        vocab_size: 781
+      state:
+        array_dict: dataset/atom_embed_dict.pkl
+        context_nf: 0
+        edge_loss: 1
+        focal_loss: 5
+        full_softmax: true
+        hidden_nf: 256
+        in_node_nf: 8
+        n_layers_focal: 3
+        n_layers_full: 3
+        node_loss: 2
+        out_node_nf: 780
+        vocab_size: 781
+    optim: &id006 !!python/object/new:easydict.EasyDict
+      dictitems:
+        _target_: torch.optim.AdamW
+        amsgrad: true
+        lr: 0.0004
+        weight_decay: 1.0e-08
+      state:
+        _target_: torch.optim.AdamW
+        amsgrad: true
+        lr: 0.0004
+        weight_decay: 1.0e-08
+    scheduler: &id007 !!python/object/new:easydict.EasyDict
+      dictitems:
+        _target_: torch.optim.lr_scheduler.StepLR
+        gamma: 0.1
+        step_size: 3
+      state:
+        _target_: torch.optim.lr_scheduler.StepLR
+        gamma: 0.1
+        step_size: 3
+    trainer: &id008 !!python/object/new:easydict.EasyDict
+      dictitems:
+        accelerator: gpu
+        default_root_dir: pl_log/refine
+        devices: &id003
+        - 0
+        - 1
+        - 2
+        gradient_clip_algorithm: norm
+        gradient_clip_val: 1
+        log_every_n_steps: 10
+        max_epochs: 200
+        num_sanity_val_steps: 0
+        strategy: ddp
+        track_grad_norm: 2
+        weights_summary: top
+      state:
+        accelerator: gpu
+        default_root_dir: pl_log/refine
+        devices: *id003
+        gradient_clip_algorithm: norm
+        gradient_clip_val: 1
+        log_every_n_steps: 10
+        max_epochs: 200
+        num_sanity_val_steps: 0
+        strategy: ddp
+        track_grad_norm: 2
+        weights_summary: top
+  state:
+    dataset: *id004
+    model: *id005
+    optim: *id006
+    scheduler: *id007
+    trainer: *id008

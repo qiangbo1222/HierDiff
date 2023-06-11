@@ -37,7 +37,7 @@ def sample(cfg):
     model.to(device)
     #SAS_context_range = [i/10 for i in range(-4, 50)]
     results = model.sample_batches(**cfg.sample, device=device, context_range=None)
-    with open(cfg.sample_dir, 'wb') as f:
+    with open('sample_results.pkl', 'wb') as f:
         pickle.dump(results, f)
     
 
