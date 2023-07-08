@@ -78,4 +78,4 @@ Please consider citing the our paper if you find it helpful. Thank you!
   organization={PMLR}
 }
 ```
-This Code is build upon [JT-VAE][https://github.com/wengong-jin/icml18-jtnn] and [EDM][https://github.com/ehoogeboom/e3_diffusion_for_molecules]. We would like to acknowledge their contribution.
+This Code is build upon [JT-VAE](https://github.com/wengong-jin/icml18-jtnn) and [EDM](https://github.com/ehoogeboom/e3_diffusion_for_molecules). We would like to acknowledge their contribution.
