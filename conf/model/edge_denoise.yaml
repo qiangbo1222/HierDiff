@@ -7,6 +7,7 @@ n_layers_full: 3
 n_layers_focal: 3
 
 array_dict: dataset/atom_embed_dict.pkl
+
 #change this to false if you want to use hard constraint
 full_softmax: True
 

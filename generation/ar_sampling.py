@@ -9,7 +9,6 @@ import sys
 import warnings
 from queue import PriorityQueue
 
-
 import tqdm
 from pathos.multiprocessing import ProcessingPool as Pool
 
@@ -34,18 +33,14 @@ lg = rdkit.RDLogger.logger()
 lg.setLevel(rdkit.RDLogger.CRITICAL)
 
 
+from jtnn.jtnn_dec import can_assemble
 from models.edge_denoise import Edge_denoise
 from models.model_refine import Node2Vec
-
-from jtnn.jtnn_dec import can_assemble
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config_path',
                     type=str,
                     default='conf')
-parser.add_argument('--start_num',
-                    type=int,
-                    default=0)
 parser.add_argument('--input_path', type=str)
 parser.add_argument('--output_path', type=str)
 args = parser.parse_args()
@@ -174,7 +169,7 @@ def update_trees(model, model_refine,trees, vocab, beam_size=5, device=torch.dev
                     n = MolTreeNode(cand_smiles[j], trees[i].tree.nodes[edges_result[i][1]].pos, hbd=trees[i].tree.nodes[edges_result[i][1]].fp[0], vocab=vocab)
                     n.size = Chem.MolFromSmiles(cand_smiles[j]).GetNumHeavyAtoms()
                     n.fp = vocab.fp_df.loc[cand_smiles[j]].values
-                    #n.pos = n.pos + x_perturb[i].cpu().detach().numpy()
+
                     if n.fp.shape < trees[i].tree.nodes[edges_result[i][1]].fp.shape:#add context
                         n.fp = np.concatenate([n.fp, [trees[i].tree.nodes[edges_result[i][1]].fp[-1]]])
                     cand_nodes.append(n)
@@ -182,7 +177,6 @@ def update_trees(model, model_refine,trees, vocab, beam_size=5, device=torch.dev
                     n = MolTreeNode(cand_smiles[j], trees[i].tree.nodes[edges_result[i][0]].pos, hbd=trees[i].tree.nodes[edges_result[i][0]].fp[0], vocab=vocab)
                     n.size = Chem.MolFromSmiles(cand_smiles[j]).GetNumHeavyAtoms()
                     n.fp = vocab.fp_df.loc[cand_smiles[j]].values
-                    #n.pos = n.pos + x_perturb[i].cpu().detach().numpy()
                     if n.fp.shape < trees[i].tree.nodes[edges_result[i][0]].fp.shape:#add context
                         n.fp = np.concatenate([n.fp, [trees[i].tree.nodes[edges_result[i][0]].fp[-1]]])
                     cand_nodes.append(n)
@@ -195,8 +189,7 @@ def update_trees(model, model_refine,trees, vocab, beam_size=5, device=torch.dev
                     new_trees[i][j].tree.nodes[edges_result[i][1]] = n
                 else:
                     new_trees[i][j].tree.nodes[edges_result[i][0]] = n
-                    #print(f'{j}_update: {new_trees[i][j].index_}: {[n.wid for n in new_trees[i][j].tree.nodes if isinstance(n, MolTreeNode)]}')
-            
+                
             #update edges
             for t_ind in range(len(new_trees[i])):
                 if t_ind >= len(cand_nodes):
@@ -248,7 +241,7 @@ def remove_queue_dup(q, ind, keep, pool=None, check_assemb=False):
         t = q.get()
         if t[1].index_ != ind:
             clean_q.put(t)
-            #print(f'0: {t}')
+
         elif t[1].last_focal is not None:
             count_exact = len([n for n in t[1].tree.nodes if isinstance(n, MolTreeNode)])
             collect_q_list.append(t[1])
@@ -299,7 +292,7 @@ def sample_trees_from_blur(jts, model, model_refine, vocab, cfg, device, context
             p, tree = q.get()
             if tree.end:
                 results.append(tree)
-                #print(f'success for tree {len(results) + 1}')
+
                 q = remove_queue_dup(q, tree.index_, cfg.generation.beam_size, pool)
                 if len(results) == len(jts):
                     return results
@@ -326,7 +319,7 @@ def sample_trees_from_blur(jts, model, model_refine, vocab, cfg, device, context
                     q.put((new_t.logp, new_t))
                 q = remove_queue_dup(q, new_t.index_, cfg.generation.beam_size, pool)
                 tree_batch = []
-    #print('failed')
+
     return results
 
 
@@ -372,7 +365,6 @@ if __name__ == '__main__':
     sample_batch_size = 1
     trees_output = []
     
-    data = data[args.start_num: args.start_num+1000]
     for i in range(len(data)):
         data[i]['size'] = torch.round(data[i]['h'][:, 3]).int()
         data[i]['h'] = torch.round(data[i]['h'][:, :3]).int()
@@ -384,7 +376,7 @@ if __name__ == '__main__':
         #except:
         #    print('DDPM generate impossible atom dict')
         #    continue
-        #need the above code to skip impossible fragments when using hard constraint
+        #need the above code to skip impossible fragments when using hard constraint, i.e. set full_softmax to False
         if len(r) > 0:
             for t in r:
                 if 'context' in data[i].keys():
@@ -392,6 +384,6 @@ if __name__ == '__main__':
                 trees_output.append(t)
                 break
     print(f'{len(trees_output)} trees sampled')
-    with open(os.path.join(args.output_path, f'sampled_trees_from_atom_embed_{args.start_num}-{args.start_num+1000}__{cfg.generation.beam_size}.pkl'), 'wb') as f:
+    with open(os.path.join(args.output_path, f'sampled_trees_from_atom_embed_{cfg.generation.beam_size}.pkl'), 'wb') as f:
         pickle.dump(trees_output, f)
     

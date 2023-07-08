@@ -132,11 +132,11 @@ def set_rmsd(mol, amap, tree):
   smiles = Chem.MolToSmiles(mol)
   m3d_rdkit = Chem.AddHs(mol)
   AllChem.EmbedMolecule(m3d_rdkit, randomSeed=1)
-  #AllChem.UFFOptimizeMoleculeConfs(m3d_rdkit)
+
   reference_mol = m3d_rdkit
   
   m3d_rdkit = Chem.RemoveHs(m3d_rdkit)
-  #m3d_tree = Chem.RemoveHs(m3d_tree)
+
   reference_mol = Chem.RemoveHs(reference_mol)
   rdkit_xyz = np.stack([np.array(m3d_rdkit.GetConformer().GetAtomPosition(i)) for i in range(m3d_rdkit.GetNumAtoms())])
   node_atom_map = [list(a.values()) for a in amap]
@@ -153,7 +153,7 @@ def set_rmsd(mol, amap, tree):
   reference_nodes = tree.nodes
   attach_order, _ = get_bfs_order(tree.adj_matrix.nonzero(), len(tree.nodes))
   reference_nodes = [reference_nodes[i] for i in attach_order]
-  #reference_nodes = sorted(reference_nodes, key=lambda n: len(n.clique), reverse=False)
+
   for i, n in enumerate(reference_nodes):
     n.clique = amap[i]
   for n in reference_nodes[:1]:
@@ -172,12 +172,9 @@ def set_rmsd(mol, amap, tree):
     m3d_rdkit = move_leaf(m3d_rdkit, n.clique, reference_mol, attached_pos=[neighbors_rdkit_pos, neighbors_ref_pos], attached_clique=attach)
     for v in n.clique:
         visited.add(v)
-  m3d_rdkit_org = copy.deepcopy(m3d_rdkit)
-  AllChem.UFFOptimizeMoleculeConfs(m3d_rdkit)
+    AllChem.UFFOptimizeMoleculeConfs(m3d_rdkit, maxIters=5)
 
-  return {'tree_rmsd': RMSD_package_tree(m3d_rdkit, m3d_rdkit_org),
-          'mol_rmsd': RMSD_package_mol(m3d_rdkit, m3d_rdkit_org),
-          'mol_uff': m3d_rdkit, 'mol_org': m3d_rdkit_org}
+  return m3d_rdkit
 
 def base_rmsd(mol):
   mol1 = copy.deepcopy(mol)

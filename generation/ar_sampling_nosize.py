@@ -9,7 +9,6 @@ import sys
 import warnings
 from queue import PriorityQueue
 
-
 import tqdm
 from pathos.multiprocessing import ProcessingPool as Pool
 
@@ -34,18 +33,14 @@ lg = rdkit.RDLogger.logger()
 lg.setLevel(rdkit.RDLogger.CRITICAL)
 
 
+from jtnn.jtnn_dec import can_assemble
 from models.edge_denoise import Edge_denoise
 from models.model_refine import Node2Vec
-
-from jtnn.jtnn_dec import can_assemble
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config_path',
                     type=str,
                     default='conf')
-parser.add_argument('--start_num',
-                    type=int,
-                    default=0)
 parser.add_argument('--input_path', type=str)
 parser.add_argument('--output_path', type=str)
 args = parser.parse_args()
@@ -70,7 +65,7 @@ def prepare_data(feat, position, adj_matrix, node_types={}, vocab_size=780):
     return {'feat': feat, 
             'position': torch.tensor(position),
             'adj_matrix': torch.tensor(adj_matrix)}
-            #'size': torch.tensor(size)}
+
 
 
 def pad_data(data, device):
@@ -85,7 +80,6 @@ def pad_data(data, device):
     for i, d in enumerate(data):
         node_feat[i, :d['feat'].shape[0], :] = d['feat']
         node_mask[i, :d['feat'].shape[0], :] = 1
-        #node_size[i, :d['feat'].shape[0], :] = d['size']
         node_position[i, :d['position'].shape[0], :] = d['position']
         node_adj_matrix[i, :d['adj_matrix'].shape[0], :d['adj_matrix'].shape[0]] = d['adj_matrix']
         edge_mask[i, :d['adj_matrix'].shape[0], :d['adj_matrix'].shape[0]] = 1 - torch.eye(d['adj_matrix'].shape[0])
@@ -93,7 +87,6 @@ def pad_data(data, device):
             'node_pos': node_position.to(device),
             'search_adj_matrix': node_adj_matrix.to(device),
             'edge_mask': edge_mask.to(device)}
-            #'node_size': node_size.to(device),
 
 
 def tree_to_data(tree: MolTree, vocab_size=780, feat_size=8, context_size=0):#TODO remember to move into config files
@@ -103,7 +96,7 @@ def tree_to_data(tree: MolTree, vocab_size=780, feat_size=8, context_size=0):#TO
     node_types = {}
     node_feat = torch.zeros([len(tree.nodes), feat_size + context_size + 1])
     node_pos = torch.zeros([len(tree.nodes), 3])
-    #node_size = torch.zeros([len(tree.nodes), 1])
+
     for i, node in enumerate(tree.nodes):
         if node.wid is not None:
             node_types[i] = node.wid
@@ -115,7 +108,7 @@ def tree_to_data(tree: MolTree, vocab_size=780, feat_size=8, context_size=0):#TO
         else:
             node_feat[i] = torch.cat([torch.tensor(node.fp), torch.tensor([dis_type], dtype=torch.float)])
         node_pos[i] = torch.tensor(node.pos)
-        #node_size[i] = torch.tensor(node.size)
+
     return prepare_data(node_feat, node_pos, tree.adj_matrix, node_types, vocab_size)#node_size,
 
 
@@ -147,8 +140,7 @@ def update_trees(model, model_refine,trees, vocab, beam_size=5, device=torch.dev
     refined_trees = [t for i, t in enumerate(trees) if refined[i]]
     logp_refine = [p for i, p in enumerate(logp_refine) if refined[i]]
     trees = [t for i, t in enumerate(trees) if not refined[i]]
-    #logp_refine = []
-    #refined_trees = []
+
     if len(trees) > 0:
         data_batch = [tree_to_data(t.tree) for t in trees]
         data_batch = pad_data(data_batch, model.device)
@@ -157,13 +149,7 @@ def update_trees(model, model_refine,trees, vocab, beam_size=5, device=torch.dev
         new_trees = [[copy.deepcopy(trees[i]) for _ in range(beam_size)] for i in range(len(trees))]
         logp_batch = []
         for i, t in enumerate(trees):
-            #for new_t in new_trees[i]:
-            #    new_t.tree.adj_matrix = adj_matrix[i]
-            '''
-            array_inds = vocab.get_array(node_array_predict[i])
-            if len(array_inds) == 0:
-                array_inds = handle_wrong_array(node_array_predict[i], vocab)
-            '''
+
             array_inds = [num for num in range(vocab.size())]
             predict = nn.LogSoftmax(dim=-1)(node_predict[i, array_inds].detach()).cpu()
             if len(array_inds) < beam_size:
@@ -178,8 +164,7 @@ def update_trees(model, model_refine,trees, vocab, beam_size=5, device=torch.dev
                 if len(edges_result[i]) == 2:
                     n = MolTreeNode(cand_smiles[j], trees[i].tree.nodes[edges_result[i][1]].pos, hbd=trees[i].tree.nodes[edges_result[i][1]].fp[0], vocab=vocab)
                     n.size = Chem.MolFromSmiles(cand_smiles[j]).GetNumHeavyAtoms()
-                    #n.pos = n.pos + x_perturb[i].cpu().detach().numpy()
-                    #n.fp = vocab.fp_df.loc[cand_smiles[j]].values
+
                     n.fp = new_trees[i][j].tree.nodes[edges_result[i][1]].fp
                     if n.fp.shape < trees[i].tree.nodes[edges_result[i][1]].fp.shape:#add context
                         n.fp = np.concatenate([n.fp, [trees[i].tree.nodes[edges_result[i][1]].fp[-1]]])
@@ -187,8 +172,7 @@ def update_trees(model, model_refine,trees, vocab, beam_size=5, device=torch.dev
                 else:
                     n = MolTreeNode(cand_smiles[j], trees[i].tree.nodes[edges_result[i][0]].pos, hbd=trees[i].tree.nodes[edges_result[i][0]].fp[0], vocab=vocab)
                     n.size = Chem.MolFromSmiles(cand_smiles[j]).GetNumHeavyAtoms()
-                    #n.pos = n.pos + x_perturb[i].cpu().detach().numpy()
-                    #n.fp = vocab.fp_df.loc[cand_smiles[j]].values
+
                     n.fp = new_trees[i][j].tree.nodes[edges_result[i][0]].fp
                     if n.fp.shape < trees[i].tree.nodes[edges_result[i][0]].fp.shape:#add context
                         n.fp = np.concatenate([n.fp, [trees[i].tree.nodes[edges_result[i][0]].fp[-1]]])
@@ -202,11 +186,7 @@ def update_trees(model, model_refine,trees, vocab, beam_size=5, device=torch.dev
                     new_trees[i][j].tree.nodes[edges_result[i][1]] = n
                 else:
                     new_trees[i][j].tree.nodes[edges_result[i][0]] = n
-                    #print(f'{j}_update: {new_trees[i][j].index_}: {[n.wid for n in new_trees[i][j].tree.nodes if isinstance(n, MolTreeNode)]}')
-            
-            #for tree in new_trees[i]:
-            #    print(f'{tree.index_}: {[n.wid for n in tree.tree.nodes if isinstance(n, MolTreeNode)]}')
-            #print('end checked round')
+
             #update edges
             for t_ind in range(len(new_trees[i])):
                 if t_ind >= len(cand_nodes):
@@ -403,11 +383,10 @@ if __name__ == '__main__':
     sample_batch_size = 1
     trees_output = []
     
-    data = data[args.start_num: args.start_num]
+
     for i in range(len(data)):
         data[i]['h'] = torch.cat([torch.round(data[i]['h'][:, :5]).int(), data[i]['h'][:, 5:8]], axis=1)
     for i in tqdm.tqdm(range(0, len(data), sample_batch_size)):
-        #logp_batch = logP_context_range[(i + args.start_num // 32) % len(logP_context_range)]
         r = sample_trees_from_blur(data[i: i + sample_batch_size], model, model_refine, vocab, cfg, device)
         if len(r) > 0:
             for t in r:
@@ -420,6 +399,6 @@ if __name__ == '__main__':
                     trees_output.append(t)
                     break
     print(f'{len(trees_output)} trees sampled')
-    with open(os.path.join(args.output_path, f'sampled_trees_from_prop_embed_{args.start_num}__{cfg.generation.beam_size}.pkl'), 'wb') as f:
+    with open(os.path.join(args.output_path, f'sampled_trees_from_prop_embed_{cfg.generation.beam_size}.pkl'), 'wb') as f:
         pickle.dump(trees_output, f)
     
