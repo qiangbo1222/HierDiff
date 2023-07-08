@@ -5,9 +5,7 @@
 
 The official implementation of 'Coarse-to-Fine: a Hierarchical Diffusion Model for Molecule Generation in 3D' (ICML 2023 Poster). This is our first public release version, so feel free to open an issue if you meet trouble applying our code.
 
-[Code](https://github.com/qiangbo1222/HierDiff)
-
-[Paper Arxiv](https://arxiv.org/abs/2305.13266)
+[Code](https://github.com/qiangbo1222/HierDiff)   [Paper Arxiv](https://arxiv.org/abs/2305.13266)
 
 ![cover](assets/overview.png)
 
@@ -67,3 +65,17 @@ python generation/reconstruct.py --tree_path $OUTPUT_PATH --output_dir $RESULT_P
 ```
 
 The output files is a pickled file containing the coordinates of the fragment centers and Rdkit Mol object. If you need atom-resolution coordinates, you can pass the results to the *set_rmsd* function from `eval/MFF_RMSD.py` to derive refined conformations.
+
+## Citation
+Please consider citing the our paper if you find it helpful. Thank you!
+```
+@inproceedings{qiang2023coarse,
+  title={Coarse-to-Fine: a Hierarchical Diffusion Model for Molecule Generation in 3D},
+  author={Qiang, Bo and Song, Yuxuan and Xu, Minkai and Gong, Jingjing and Gao, Bowen and Zhou, Hao and Ma, Wei-Ying and Lan, Yanyan},
+  booktitle={International Conference on Machine Learning},
+  pages={28277--28299},
+  year={2023},
+  organization={PMLR}
+}
+```
+This Code is build upon [JT-VAE][https://github.com/wengong-jin/icml18-jtnn] and [EDM][https://github.com/ehoogeboom/e3_diffusion_for_molecules]. We would like to acknowledge their contribution.
